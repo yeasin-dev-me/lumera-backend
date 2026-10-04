@@ -34,12 +34,14 @@ def custom_exception_handler(exc, context):
                 }
             elif isinstance(response.data, list):
                 details = {"non_field_errors": [str(item) for item in response.data]}
-        elif isinstance(exc, exceptions.NotAuthenticated):
-            error_code = "not_authenticated"
-            message = getattr(exc, "detail", "Authentication credentials were not provided.")
-        elif isinstance(exc, exceptions.AuthenticationFailed):
-            error_code = "authentication_failed"
-            message = getattr(exc, "detail", "Incorrect authentication credentials.")
+        elif isinstance(exc, (exceptions.NotAuthenticated, exceptions.AuthenticationFailed)):
+            error_code = "not_authenticated" if isinstance(exc, exceptions.NotAuthenticated) else "authentication_failed"
+            raw_detail = getattr(exc, "detail", "Authentication credentials failed.")
+            if isinstance(raw_detail, dict):
+                error_code = raw_detail.get("code", error_code)
+                message = raw_detail.get("detail", "Authentication failed.")
+            else:
+                message = raw_detail
         elif isinstance(exc, exceptions.PermissionDenied):
             error_code = "permission_denied"
             message = getattr(exc, "detail", "You do not have permission to perform this action.")

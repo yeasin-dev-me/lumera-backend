@@ -1,8 +1,39 @@
-"""User and Role models for Lumera authentication and RBAC."""
+import re
 import uuid
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
+from django.core.exceptions import ValidationError
 from django.db import models
 from apps.common.models import PublicIdModel, TimeStampedModel
+
+PERMISSION_PATTERN = re.compile(r"^[a-z_]+\.[a-z_]+$")
+
+
+def validate_permission_code(code: str) -> str:
+    """Validate a single permission code string (canonical module.action or '*')."""
+    if not isinstance(code, str):
+        raise ValidationError("Permission code must be a string.")
+    code = code.strip()
+    if not code:
+        raise ValidationError("Permission code cannot be empty.")
+    if code == "*":
+        return code
+    if not PERMISSION_PATTERN.match(code):
+        raise ValidationError(
+            f"Invalid permission format '{code}'. Must be in canonical 'module.action' format (e.g. 'products.read')."
+        )
+    return code
+
+
+def validate_permissions_list(permissions) -> list:
+    """Validate a collection of permissions, rejecting invalid types or formats."""
+    if not isinstance(permissions, list):
+        raise ValidationError("Permissions must be a list of permission strings.")
+    validated = []
+    for perm in permissions:
+        valid_perm = validate_permission_code(perm)
+        if valid_perm not in validated:
+            validated.append(valid_perm)
+    return validated
 
 
 class Role(TimeStampedModel):
@@ -20,6 +51,14 @@ class Role(TimeStampedModel):
 
     def __str__(self):
         return self.name
+
+    def clean(self):
+        super().clean()
+        self.permissions = validate_permissions_list(self.permissions)
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
 
 
 class UserManager(BaseUserManager):
@@ -78,13 +117,17 @@ class User(AbstractBaseUser, PermissionsMixin, PublicIdModel, TimeStampedModel):
         return name or self.email
 
     def get_permission_codes(self):
-        """Return the union of all permission strings assigned to this user."""
+        """Return the union of all validated permission strings assigned to this user."""
+        if not self.is_active:
+            return []
         if self.is_superuser:
             return ["*"]
         perms = set()
         for role in self.roles.all():
             if isinstance(role.permissions, list):
-                perms.update(role.permissions)
+                for p in role.permissions:
+                    if isinstance(p, str) and (PERMISSION_PATTERN.match(p) or p == "*"):
+                        perms.add(p)
         return sorted(list(perms))
 
     def has_perm_code(self, perm_code: str) -> bool:
@@ -93,5 +136,7 @@ class User(AbstractBaseUser, PermissionsMixin, PublicIdModel, TimeStampedModel):
             return False
         if self.is_superuser:
             return True
+        if not perm_code or not isinstance(perm_code, str):
+            return False
         user_perms = self.get_permission_codes()
         return ("*" in user_perms) or (perm_code in user_perms)

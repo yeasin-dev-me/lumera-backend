@@ -21,8 +21,12 @@ urlpatterns = [
 
     # Namespaces
     path("api/v1/auth/", include("apps.users.urls_auth")),
+    path("api/v1/storefront/categories/", include("apps.categories.urls_storefront")),
+    path("api/v1/storefront/products/", include("apps.products.urls_storefront")),
     path("api/v1/storefront/", include("apps.common.urls_storefront")),
     path("api/v1/customer/", include("apps.users.urls_customer")),
+    path("api/v1/admin/categories/", include("apps.categories.urls_admin")),
+    path("api/v1/admin/products/", include("apps.products.urls_admin")),
     path("api/v1/admin/", include("apps.users.urls_admin")),
     path("api/v1/internal/", include("apps.common.urls_internal")),
 
