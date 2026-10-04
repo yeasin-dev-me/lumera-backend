@@ -58,7 +58,7 @@ def test_customer_registration_validation_rules():
 @pytest.mark.django_db
 def test_customer_login_flow():
     client = APIClient()
-    user = User.objects.create_user(email="buyer@example.com", password="SecurePassword123!")
+    User.objects.create_user(email="buyer@example.com", password="SecurePassword123!")
 
     # Valid login
     response = client.post(

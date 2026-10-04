@@ -7,6 +7,29 @@ from rest_framework.views import exception_handler
 logger = logging.getLogger(__name__)
 
 
+class ConflictError(exceptions.APIException):
+    """409 state conflict (e.g. duplicate). Rendered as code `conflict`."""
+
+    status_code = status.HTTP_409_CONFLICT
+    default_detail = "The request conflicts with the current state of the resource."
+    default_code = "conflict"
+
+
+class InsufficientStock(ConflictError):
+    """409 requested quantity exceeds available stock (BR-07)."""
+
+    default_detail = "Requested quantity exceeds available stock."
+    default_code = "insufficient_stock"
+
+
+class ProductUnavailable(ConflictError):
+    """409 product is no longer eligible for storefront purchase (BR-04)."""
+
+    default_detail = "This product is no longer available."
+    default_code = "product_unavailable"
+
+
+
 def custom_exception_handler(exc, context):
     """Transform DRF and unexpected exceptions into Lumera standard error format:
     {

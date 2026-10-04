@@ -7,7 +7,7 @@ from apps.users.models import User
 @pytest.mark.django_db
 def test_jwt_refresh_and_rotation_lifecycle():
     client = APIClient()
-    user = User.objects.create_user(email="lifecycle@example.com", password="Password123!")
+    User.objects.create_user(email="lifecycle@example.com", password="Password123!")
 
     # Login to obtain initial tokens
     login_resp = client.post(
