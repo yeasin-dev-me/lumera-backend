@@ -75,6 +75,13 @@ class Order(PublicIdModel, TimeStampedModel):
 
     customer_notes = models.TextField(blank=True, default="")
 
+    # Operational fulfillment information (ADR-0015)
+    courier = models.CharField(max_length=100, blank=True, default="")
+    tracking_number = models.CharField(max_length=100, blank=True, default="")
+    tracking_url = models.URLField(max_length=500, blank=True, default="")
+    shipped_at = models.DateTimeField(null=True, blank=True)
+    delivered_at = models.DateTimeField(null=True, blank=True)
+
     class Meta:
         db_table = "orders_order"
         ordering = ["-created_at", "-id"]
@@ -149,3 +156,12 @@ class OrderStatusHistory(models.Model):
 
     def __str__(self):
         return f"{self.order.order_number}: {self.from_status or 'start'} -> {self.to_status}"
+
+    @property
+    def actor_type(self) -> str:
+        """Dynamically resolve actor category without storing redundant DB column (ADR-0015)."""
+        if self.changed_by is None:
+            return "system"
+        if getattr(self.changed_by, "is_staff", False):
+            return "staff"
+        return "customer"

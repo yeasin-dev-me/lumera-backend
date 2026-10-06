@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     "apps.cart.apps.CartConfig",
     "apps.orders.apps.OrdersConfig",
     "apps.payments.apps.PaymentsConfig",
+    "apps.notifications.apps.NotificationsConfig",
 ]
 
 MIDDLEWARE = [
@@ -174,4 +175,8 @@ PAYMENT_CALLBACK_BASE_URL = os.getenv("PAYMENT_CALLBACK_BASE_URL", "http://local
 PAYMENT_SSLCOMMERZ_STORE_ID = os.getenv("PAYMENT_SSLCOMMERZ_STORE_ID", "testbox")
 PAYMENT_SSLCOMMERZ_STORE_PASSWORD = os.getenv("PAYMENT_SSLCOMMERZ_STORE_PASSWORD", "qwerty")
 PAYMENT_SSLCOMMERZ_IS_SANDBOX = os.getenv("PAYMENT_SSLCOMMERZ_IS_SANDBOX", "True").lower() == "true"
+
+# Email & Notifications (ADR-0015)
+EMAIL_BACKEND = os.getenv("EMAIL_BACKEND", "django.core.mail.backends.locmem.EmailBackend")
+DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "notifications@lumera.local")
 

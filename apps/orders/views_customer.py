@@ -75,3 +75,50 @@ class CustomerOrderDetailView(APIView):
 
         serializer = OrderDetailSerializer(order)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class CustomerOrderCancelView(APIView):
+    """POST /api/v1/customer/orders/{public_id}/cancel/ - Cancel own unpaid pending order."""
+
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, public_id):
+        order = (
+            Order.objects.filter(user=request.user, public_id=public_id)
+            .prefetch_related("items__product", "status_history")
+            .first()
+        )
+        if not order:
+            raise exceptions.NotFound("Order not found.")
+
+        from .serializers import OrderCancelSerializer
+        from .services import cancel_order
+
+        serializer = OrderCancelSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        reason = serializer.validated_data.get("reason", "Cancelled by customer")
+        updated_order = cancel_order(order=order, user=request.user, reason=reason)
+
+        return Response(OrderDetailSerializer(updated_order).data, status=status.HTTP_200_OK)
+
+
+class CustomerOrderTimelineView(APIView):
+    """GET /api/v1/customer/orders/{public_id}/timeline/ - Retrieve order audit progression."""
+
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, public_id):
+        order = (
+            Order.objects.filter(user=request.user, public_id=public_id)
+            .prefetch_related("status_history")
+            .first()
+        )
+        if not order:
+            raise exceptions.NotFound("Order not found.")
+
+        from .serializers import OrderTimelineItemSerializer
+
+        serializer = OrderTimelineItemSerializer(order.status_history.all(), many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+

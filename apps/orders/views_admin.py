@@ -1,7 +1,8 @@
 """Staff-facing views for Orders in CMS (ADR-0013, CMS Architecture)."""
 import uuid
 from django.db.models import Q, Sum
-from rest_framework import exceptions, generics
+from rest_framework import exceptions, generics, status
+from rest_framework.response import Response
 from apps.common.pagination import StandardResultsSetPagination
 from apps.users.permissions import HasPermission
 from .models import Order
@@ -64,3 +65,76 @@ class AdminOrderDetailView(generics.RetrieveAPIView):
             raise exceptions.NotFound("Order not found.")
 
         return order
+
+
+class AdminOrderTransitionView(generics.GenericAPIView):
+    """POST /api/v1/admin/orders/{public_id}/transition/ - Transition order status."""
+
+    permission_classes = [HasPermission("orders.manage")]
+    serializer_class = AdminOrderDetailSerializer
+
+    def post(self, request, public_id):
+        try:
+            val = uuid.UUID(str(public_id))
+            order = Order.objects.filter(public_id=val).first()
+        except (ValueError, TypeError):
+            order = None
+
+        if not order:
+            raise exceptions.NotFound("Order not found.")
+
+        from .serializers import OrderTransitionSerializer
+        from .services import transition_order_status
+
+        serializer = OrderTransitionSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        updated_order = transition_order_status(
+            order=order,
+            to_status=serializer.validated_data["to_status"],
+            user=request.user,
+            reason=serializer.validated_data.get("reason", ""),
+            courier=serializer.validated_data.get("courier", ""),
+            tracking_number=serializer.validated_data.get("tracking_number", ""),
+            tracking_url=serializer.validated_data.get("tracking_url", ""),
+        )
+
+        return Response(
+            AdminOrderDetailSerializer(updated_order).data,
+            status=status.HTTP_200_OK,
+        )
+
+
+class AdminOrderFulfillmentView(generics.GenericAPIView):
+    """PATCH /api/v1/admin/orders/{public_id}/fulfillment/ - Update courier/tracking info."""
+
+    permission_classes = [HasPermission("orders.manage")]
+    serializer_class = AdminOrderDetailSerializer
+
+    def patch(self, request, public_id):
+        try:
+            val = uuid.UUID(str(public_id))
+            order = Order.objects.filter(public_id=val).first()
+        except (ValueError, TypeError):
+            order = None
+
+        if not order:
+            raise exceptions.NotFound("Order not found.")
+
+        from .serializers import FulfillmentUpdateSerializer
+        from .services import update_order_fulfillment
+
+        serializer = FulfillmentUpdateSerializer(data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+
+        updated_order = update_order_fulfillment(
+            order=order,
+            courier=serializer.validated_data.get("courier", ""),
+            tracking_number=serializer.validated_data.get("tracking_number", ""),
+            tracking_url=serializer.validated_data.get("tracking_url", ""),
+        )
+
+        return Response(
+            AdminOrderDetailSerializer(updated_order).data,
+            status=status.HTTP_200_OK,
+        )

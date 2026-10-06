@@ -63,11 +63,14 @@ class OrderItemDetailSerializer(serializers.ModelSerializer):
 class OrderStatusHistorySerializer(serializers.ModelSerializer):
     """Status transition history log entry."""
 
+    actor_type = serializers.CharField(read_only=True)
+
     class Meta:
         model = OrderStatusHistory
         fields = [
             "from_status",
             "to_status",
+            "actor_type",
             "reason",
             "created_at",
         ]
@@ -132,6 +135,11 @@ class OrderDetailSerializer(serializers.ModelSerializer):
             "customer_notes",
             "items",
             "status_history",
+            "courier",
+            "tracking_number",
+            "tracking_url",
+            "shipped_at",
+            "delivered_at",
             "payment",
             "created_at",
             "updated_at",
@@ -231,3 +239,52 @@ class AdminOrderDetailSerializer(OrderDetailSerializer):
             }
             for att in payment.attempts.all()
         ]
+
+
+class OrderTransitionSerializer(serializers.Serializer):
+    """Payload serializer for admin order state transitions (ADR-0015)."""
+
+    to_status = serializers.ChoiceField(
+        choices=[
+            Order.STATUS_CONFIRMED,
+            Order.STATUS_PROCESSING,
+            Order.STATUS_SHIPPED,
+            Order.STATUS_DELIVERED,
+            Order.STATUS_CANCELLED,
+        ]
+    )
+    reason = serializers.CharField(required=False, allow_blank=True, default="")
+    courier = serializers.CharField(required=False, allow_blank=True, default="")
+    tracking_number = serializers.CharField(required=False, allow_blank=True, default="")
+    tracking_url = serializers.URLField(required=False, allow_blank=True, default="")
+
+
+class FulfillmentUpdateSerializer(serializers.Serializer):
+    """Payload serializer for updating courier/tracking information without status change."""
+
+    courier = serializers.CharField(required=False, allow_blank=True, default="")
+    tracking_number = serializers.CharField(required=False, allow_blank=True, default="")
+    tracking_url = serializers.URLField(required=False, allow_blank=True, default="")
+
+
+class OrderCancelSerializer(serializers.Serializer):
+    """Payload serializer for customer order cancellation."""
+
+    reason = serializers.CharField(required=False, allow_blank=True, default="Order cancelled by customer")
+
+
+class OrderTimelineItemSerializer(serializers.ModelSerializer):
+    """Customer-facing order audit trail item with dynamic actor resolution."""
+
+    actor_type = serializers.CharField(read_only=True)
+
+    class Meta:
+        model = OrderStatusHistory
+        fields = [
+            "from_status",
+            "to_status",
+            "actor_type",
+            "reason",
+            "created_at",
+        ]
+        read_only_fields = fields

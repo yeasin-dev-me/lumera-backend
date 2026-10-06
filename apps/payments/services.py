@@ -6,6 +6,8 @@ from django.conf import settings
 from django.db import transaction
 from django.utils import timezone
 from rest_framework import exceptions
+from apps.notifications.models import Notification
+from apps.notifications.services import safe_dispatch_order_notification
 from apps.orders.models import Order, OrderStatusHistory
 from .exceptions import OrderNotPayableError
 from .gateways import get_gateway
@@ -283,6 +285,8 @@ def process_gateway_callback(gateway_id: str, payload: dict[str, Any]) -> dict[s
             changed_by=None,
             reason=f"Payment verified via {gateway_id.upper()} (Txn: {payment.provider_transaction_id})",
         )
+
+        safe_dispatch_order_notification(order, Notification.EVENT_PAYMENT_CONFIRMED)
 
         PaymentAttempt.objects.create(
             payment=payment,
