@@ -114,6 +114,7 @@ class OrderDetailSerializer(serializers.ModelSerializer):
     shipping_address = serializers.SerializerMethodField()
     items = OrderItemDetailSerializer(many=True, read_only=True)
     status_history = OrderStatusHistorySerializer(many=True, read_only=True)
+    payment = serializers.SerializerMethodField()
 
     class Meta:
         model = Order
@@ -131,6 +132,7 @@ class OrderDetailSerializer(serializers.ModelSerializer):
             "customer_notes",
             "items",
             "status_history",
+            "payment",
             "created_at",
             "updated_at",
         ]
@@ -160,6 +162,23 @@ class OrderDetailSerializer(serializers.ModelSerializer):
             "country": obj.shipping_country,
         }
 
+    def get_payment(self, obj: Order) -> dict | None:
+        payment = obj.payments.order_by("-created_at").first()
+        if not payment:
+            return None
+        return {
+            "public_id": str(payment.public_id),
+            "gateway": payment.gateway,
+            "method": payment.method,
+            "status": payment.status,
+            "amount": format_money(payment.amount),
+            "currency": payment.currency,
+            "provider_transaction_id": payment.provider_transaction_id,
+            "provider_reference": payment.provider_reference,
+            "paid_at": payment.paid_at.isoformat() if payment.paid_at else None,
+            "created_at": payment.created_at.isoformat(),
+        }
+
 
 class AdminOrderListSerializer(CustomerOrderListSerializer):
     """Staff order listing with customer summary."""
@@ -178,12 +197,13 @@ class AdminOrderListSerializer(CustomerOrderListSerializer):
 
 
 class AdminOrderDetailSerializer(OrderDetailSerializer):
-    """Staff order detail with customer profile data."""
+    """Staff order detail with customer profile data and payment attempt history."""
 
     customer = serializers.SerializerMethodField()
+    payment_attempts = serializers.SerializerMethodField()
 
     class Meta(OrderDetailSerializer.Meta):
-        fields = OrderDetailSerializer.Meta.fields + ["customer"]
+        fields = OrderDetailSerializer.Meta.fields + ["customer", "payment_attempts"]
 
     def get_customer(self, obj: Order) -> dict:
         return {
@@ -192,3 +212,22 @@ class AdminOrderDetailSerializer(OrderDetailSerializer):
             "full_name": getattr(obj.user, "full_name", obj.user.email),
             "phone": getattr(obj.user, "phone", "") or "",
         }
+
+    def get_payment_attempts(self, obj: Order) -> list[dict]:
+        payment = obj.payments.prefetch_related("attempts").order_by("-created_at").first()
+        if not payment:
+            return []
+        return [
+            {
+                "public_id": str(att.public_id),
+                "attempt_number": att.attempt_number,
+                "gateway": att.gateway,
+                "status": att.status,
+                "amount": format_money(att.amount),
+                "currency": att.currency,
+                "provider_transaction_id": att.provider_transaction_id,
+                "error_message": att.error_message,
+                "created_at": att.created_at.isoformat(),
+            }
+            for att in payment.attempts.all()
+        ]

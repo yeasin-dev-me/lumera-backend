@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     "apps.products.apps.ProductsConfig",
     "apps.cart.apps.CartConfig",
     "apps.orders.apps.OrdersConfig",
+    "apps.payments.apps.PaymentsConfig",
 ]
 
 MIDDLEWARE = [
@@ -166,3 +167,11 @@ CSRF_TRUSTED_ORIGINS = [
     ).split(",")
     if origin.strip()
 ]
+
+# Payment Settings (ADR-0014)
+PAYMENT_DEFAULT_GATEWAY = os.getenv("PAYMENT_DEFAULT_GATEWAY", "sslcommerz")
+PAYMENT_CALLBACK_BASE_URL = os.getenv("PAYMENT_CALLBACK_BASE_URL", "http://localhost:8000")
+PAYMENT_SSLCOMMERZ_STORE_ID = os.getenv("PAYMENT_SSLCOMMERZ_STORE_ID", "lumera_sandbox")
+PAYMENT_SSLCOMMERZ_STORE_PASSWORD = os.getenv("PAYMENT_SSLCOMMERZ_STORE_PASSWORD", "lumera_secret")
+PAYMENT_SSLCOMMERZ_IS_SANDBOX = os.getenv("PAYMENT_SSLCOMMERZ_IS_SANDBOX", "True").lower() == "true"
+

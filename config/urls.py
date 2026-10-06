@@ -13,7 +13,7 @@ Architecture rules:
 """
 
 from django.urls import include, path, re_path
-from apps.common.views import custom_404_view, custom_500_view, health_check
+from apps.common.views import custom_404_view, health_check
 
 urlpatterns = [
     # System / Health
@@ -26,12 +26,15 @@ urlpatterns = [
     path("api/v1/storefront/", include("apps.common.urls_storefront")),
     path("api/v1/customer/", include("apps.cart.urls_customer")),
     path("api/v1/customer/", include("apps.orders.urls_customer")),
+    path("api/v1/customer/", include("apps.payments.urls_customer")),
     path("api/v1/customer/", include("apps.users.urls_customer")),
     path("api/v1/admin/categories/", include("apps.categories.urls_admin")),
     path("api/v1/admin/products/", include("apps.products.urls_admin")),
     path("api/v1/admin/", include("apps.orders.urls_admin")),
     path("api/v1/admin/", include("apps.users.urls_admin")),
     path("api/v1/internal/", include("apps.common.urls_internal")),
+    path("api/v1/internal/", include("apps.payments.urls_internal")),
+    path("api/v1/payments/", include("apps.payments.urls_public")),
 
     # Catch-all for undefined /api/v1/ endpoints to ensure standard JSON 404 response
     re_path(r"^api/v1/.*$", custom_404_view, name="api-v1-404-fallback"),
