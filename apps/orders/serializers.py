@@ -1,7 +1,7 @@
 """Serializers for Orders and Checkout domain (ADR-0013)."""
 from rest_framework import serializers
 from apps.cart.serializers import format_money
-from .models import Order, OrderItem, OrderStatusHistory, ReturnRequest, ReturnRequestItem
+from .models import Order, OrderItem, OrderStatusHistory, ReturnRequest
 
 
 class ShippingAddressInputSerializer(serializers.Serializer):
