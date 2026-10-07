@@ -169,6 +169,16 @@ class AdminReturnTransitionView(generics.GenericAPIView):
             if note:
                 return_request.staff_note = note
             return_request.save(update_fields=["status", "staff_note", "updated_at"])
+
+        action_event_map = {
+            "approve": "return_approved",
+            "reject": "return_rejected",
+            "receive": "return_received",
+        }
+        if action in action_event_map:
+            from apps.notifications.services import safe_dispatch_return_notification
+            safe_dispatch_return_notification(return_request, action_event_map[action])
+
         return Response(ReturnRequestSerializer(return_request).data, status=status.HTTP_200_OK)
 
 

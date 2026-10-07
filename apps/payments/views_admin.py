@@ -26,4 +26,7 @@ class AdminRefundView(APIView):
             reason=serializer.validated_data["reason"],
             processed_by=request.user,
         )
+        from apps.notifications.models import Notification
+        from apps.notifications.services import safe_dispatch_refund_notification
+        safe_dispatch_refund_notification(refund, Notification.EVENT_REFUND_INITIATED)
         return Response(RefundSerializer(refund).data, status=status.HTTP_201_CREATED)

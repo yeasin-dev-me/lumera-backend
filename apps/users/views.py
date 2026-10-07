@@ -26,6 +26,12 @@ class CustomerRegistrationView(APIView):
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
 
+        # Initialize default communication preferences and dispatch welcome notification (ADR-0018)
+        from apps.notifications.models import CommunicationPreference
+        CommunicationPreference.objects.get_or_create(user=user)
+        from apps.notifications.services import safe_dispatch_welcome_notification
+        safe_dispatch_welcome_notification(user)
+
         # Issue immediate JWT tokens upon successful registration
         refresh = RefreshToken.for_user(user)
         return Response(

@@ -182,6 +182,11 @@ class CustomerReturnRequestListView(APIView):
                     order_item=order_item,
                     quantity=item_data["quantity"],
                 )
+
+        from apps.notifications.models import Notification
+        from apps.notifications.services import safe_dispatch_return_notification
+        safe_dispatch_return_notification(result, Notification.EVENT_RETURN_REQUESTED)
+
         return Response(CustomerReturnRequestSerializer(result).data, status=status.HTTP_201_CREATED)
 
 

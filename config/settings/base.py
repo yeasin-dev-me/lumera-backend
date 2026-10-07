@@ -177,7 +177,10 @@ PAYMENT_SSLCOMMERZ_STORE_ID = os.getenv("PAYMENT_SSLCOMMERZ_STORE_ID", "testbox"
 PAYMENT_SSLCOMMERZ_STORE_PASSWORD = os.getenv("PAYMENT_SSLCOMMERZ_STORE_PASSWORD", "qwerty")
 PAYMENT_SSLCOMMERZ_IS_SANDBOX = os.getenv("PAYMENT_SSLCOMMERZ_IS_SANDBOX", "True").lower() == "true"
 
-# Email & Notifications (ADR-0015)
+# Email & Notifications (ADR-0015, ADR-0018)
+EMAIL_PROVIDER = os.getenv("EMAIL_PROVIDER", "console")
 EMAIL_BACKEND = os.getenv("EMAIL_BACKEND", "django.core.mail.backends.locmem.EmailBackend")
 DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "notifications@lumera.local")
+EMAIL_REPLY_TO = os.getenv("EMAIL_REPLY_TO", "support@lumera.local")
+PUBLIC_SITE_URL = os.getenv("PUBLIC_SITE_URL", "http://localhost:3000")
 
