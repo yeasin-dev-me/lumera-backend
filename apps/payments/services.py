@@ -1,9 +1,11 @@
 """Authoritative business services for Payments (ADR-0014, BR-01, BR-03, BR-12)."""
 import logging
+from decimal import Decimal
 from typing import Any
 import uuid
 from django.conf import settings
 from django.db import transaction
+from django.db.models import Sum
 from django.utils import timezone
 from rest_framework import exceptions
 from apps.notifications.models import Notification
@@ -11,10 +13,33 @@ from apps.notifications.services import safe_dispatch_order_notification
 from apps.orders.models import Order, OrderStatusHistory
 from .exceptions import OrderNotPayableError
 from .gateways import get_gateway
-from .models import Payment, PaymentAttempt
+from .models import Payment, PaymentAttempt, Refund
 from .state_machine import transition_payment
 
 logger = logging.getLogger(__name__)
+
+
+@transaction.atomic
+def create_refund(*, payment_public_id, amount, reason="", processed_by=None):
+    """Create a bounded refund while locking the payment and its order."""
+    payment = Payment.objects.select_for_update().filter(public_id=payment_public_id).first()
+    if not payment:
+        raise exceptions.NotFound("Payment not found.")
+    order = Order.objects.select_for_update().get(pk=payment.order_id)
+    if payment.status != Payment.STATUS_PAID:
+        raise exceptions.ValidationError("Only paid payments can be refunded.")
+    amount = Decimal(str(amount))
+    refunded = Refund.objects.filter(
+        payment=payment,
+        status__in=[Refund.STATUS_PENDING, Refund.STATUS_SUCCEEDED],
+    ).aggregate(total=Sum("amount"))["total"] or Decimal("0.00")
+    if amount <= 0 or refunded + amount > payment.amount:
+        raise exceptions.ValidationError("Refund amount exceeds the refundable payment balance.")
+    refund = Refund.objects.create(
+        payment=payment, order=order, amount=amount, currency=payment.currency,
+        reason=reason, processed_by=processed_by, status=Refund.STATUS_PENDING,
+    )
+    return refund
 
 
 def initiate_payment(

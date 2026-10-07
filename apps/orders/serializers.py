@@ -1,7 +1,7 @@
 """Serializers for Orders and Checkout domain (ADR-0013)."""
 from rest_framework import serializers
 from apps.cart.serializers import format_money
-from .models import Order, OrderItem, OrderStatusHistory
+from .models import Order, OrderItem, OrderStatusHistory, ReturnRequest, ReturnRequestItem
 
 
 class ShippingAddressInputSerializer(serializers.Serializer):
@@ -27,6 +27,67 @@ class OrderCreateSerializer(serializers.Serializer):
         allow_blank=True,
         default="",
     )
+
+
+class ReturnRequestSerializer(serializers.ModelSerializer):
+    order_public_id = serializers.UUIDField(source="order.public_id", read_only=True)
+    items = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ReturnRequest
+        fields = ["public_id", "order_public_id", "reason", "status", "staff_note", "items", "created_at"]
+        read_only_fields = ["public_id", "order_public_id", "status", "staff_note", "created_at"]
+
+    def get_items(self, obj):
+        return [
+            {
+                "order_item_id": str(item.order_item.id),
+                "product_name": item.order_item.product_name,
+                "quantity": item.quantity,
+            }
+            for item in obj.items.select_related("order_item").all()
+        ]
+
+
+class CustomerReturnRequestSerializer(ReturnRequestSerializer):
+    class Meta(ReturnRequestSerializer.Meta):
+        fields = ["public_id", "order_public_id", "reason", "status", "items", "created_at"]
+        read_only_fields = ["public_id", "order_public_id", "status", "created_at"]
+
+
+class ReturnRequestCreateSerializer(serializers.Serializer):
+    order_public_id = serializers.UUIDField()
+    reason = serializers.CharField(min_length=3, max_length=1000)
+    items = serializers.ListField(child=serializers.DictField(), min_length=1)
+
+    def validate_items(self, value):
+        normalized = []
+        seen = set()
+        for item in value:
+            try:
+                order_item_id = int(item["order_item_id"])
+                quantity = int(item["quantity"])
+            except (KeyError, TypeError, ValueError):
+                raise serializers.ValidationError("Each item requires order_item_id and quantity.")
+            if quantity <= 0 or order_item_id in seen:
+                raise serializers.ValidationError("Return item quantities must be positive and unique.")
+            seen.add(order_item_id)
+            normalized.append({"order_item_id": order_item_id, "quantity": quantity})
+        return normalized
+
+
+class ReturnReviewSerializer(serializers.Serializer):
+    staff_note = serializers.CharField(max_length=1000, required=False, allow_blank=True, default="")
+
+
+class AdminOrderReportSerializer(serializers.Serializer):
+    """Stable aggregate shape for CMS reporting screens."""
+
+    orders_count = serializers.IntegerField()
+    paid_orders_count = serializers.IntegerField()
+    gross_sales = serializers.CharField()
+    refunded_total = serializers.CharField()
+    currency = serializers.CharField()
 
 
 class OrderItemDetailSerializer(serializers.ModelSerializer):

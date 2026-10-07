@@ -113,3 +113,34 @@ class PaymentAttempt(PublicIdModel, TimeStampedModel):
 
     def __str__(self):
         return f"Attempt #{self.attempt_number} for Payment {self.payment.public_id} ({self.status})"
+
+
+class Refund(PublicIdModel, TimeStampedModel):
+    """Audited refund instruction tied to a captured payment."""
+
+    STATUS_PENDING = "pending"
+    STATUS_SUCCEEDED = "succeeded"
+    STATUS_FAILED = "failed"
+    STATUS_CHOICES = [
+        (STATUS_PENDING, "Pending"),
+        (STATUS_SUCCEEDED, "Succeeded"),
+        (STATUS_FAILED, "Failed"),
+    ]
+    payment = models.ForeignKey(Payment, on_delete=models.PROTECT, related_name="refunds")
+    order = models.ForeignKey("orders.Order", on_delete=models.PROTECT, related_name="refunds")
+    amount = models.DecimalField(max_digits=12, decimal_places=2)
+    currency = models.CharField(max_length=3, default="USD")
+    status = models.CharField(max_length=32, choices=STATUS_CHOICES, default=STATUS_PENDING)
+    reason = models.CharField(max_length=255, blank=True, default="")
+    provider_reference = models.CharField(max_length=255, blank=True, default="")
+    processed_by = models.ForeignKey(
+        "users.User", null=True, blank=True, on_delete=models.SET_NULL,
+        related_name="processed_refunds",
+    )
+
+    class Meta:
+        db_table = "payments_refund"
+        ordering = ["-created_at", "-id"]
+        constraints = [
+            models.CheckConstraint(check=Q(amount__gt=Decimal("0.00")), name="check_refund_amount_positive"),
+        ]

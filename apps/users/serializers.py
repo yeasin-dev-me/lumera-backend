@@ -4,7 +4,7 @@ from django.core.exceptions import ValidationError as DjangoValidationError
 from rest_framework import exceptions, serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
-from .models import User
+from .models import Address, User
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -23,7 +23,27 @@ class UserSerializer(serializers.ModelSerializer):
             "is_staff",
             "created_at",
         ]
-        read_only_fields = ["id", "is_staff", "is_active", "created_at"]
+        read_only_fields = ["id", "email", "is_staff", "is_active", "created_at"]
+
+
+class AddressSerializer(serializers.ModelSerializer):
+    """Customer address representation; ownership is always derived from auth."""
+    id = serializers.UUIDField(source="public_id", read_only=True)
+
+    class Meta:
+        model = Address
+        fields = [
+            "id", "label", "full_name", "phone", "address_line1",
+            "address_line2", "city", "area", "postal_code", "country",
+            "is_default", "created_at", "updated_at",
+        ]
+        read_only_fields = ["id", "created_at", "updated_at"]
+        extra_kwargs = {
+            "full_name": {"required": True},
+            "phone": {"required": True},
+            "address_line1": {"required": True},
+            "city": {"required": True},
+        }
 
 
 class StaffUserMeSerializer(serializers.ModelSerializer):

@@ -165,3 +165,59 @@ class OrderStatusHistory(models.Model):
         if getattr(self.changed_by, "is_staff", False):
             return "staff"
         return "customer"
+
+
+class ReturnRequest(PublicIdModel, TimeStampedModel):
+    """Customer request recorded separately from the eventual refund decision."""
+
+    STATUS_REQUESTED = "requested"
+    STATUS_APPROVED = "approved"
+    STATUS_REJECTED = "rejected"
+    STATUS_RECEIVED = "received"
+    STATUS_CANCELLED = "cancelled"
+    STATUS_CHOICES = [
+        (STATUS_REQUESTED, "Requested"), (STATUS_APPROVED, "Approved"),
+        (STATUS_REJECTED, "Rejected"), (STATUS_RECEIVED, "Received"),
+        (STATUS_CANCELLED, "Cancelled"),
+    ]
+    order = models.ForeignKey(Order, on_delete=models.PROTECT, related_name="return_requests")
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="return_requests")
+    reason = models.TextField(max_length=1000)
+    status = models.CharField(max_length=32, choices=STATUS_CHOICES, default=STATUS_REQUESTED)
+    staff_note = models.TextField(blank=True, default="")
+
+    class Meta:
+        db_table = "orders_returnrequest"
+        ordering = ["-created_at"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["order", "user"],
+                condition=models.Q(status__in=["requested", "approved"]),
+                name="one_active_return_per_order",
+            )
+        ]
+
+
+class ReturnRequestItem(TimeStampedModel):
+    """Quantity of an immutable order item included in a return request."""
+
+    return_request = models.ForeignKey(
+        ReturnRequest, on_delete=models.CASCADE, related_name="items"
+    )
+    order_item = models.ForeignKey(
+        OrderItem, on_delete=models.PROTECT, related_name="return_request_items"
+    )
+    quantity = models.PositiveIntegerField()
+
+    class Meta:
+        db_table = "orders_returnrequestitem"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["return_request", "order_item"],
+                name="unique_return_request_item",
+            ),
+            models.CheckConstraint(
+                check=models.Q(quantity__gt=0),
+                name="check_return_request_item_quantity_positive",
+            ),
+        ]

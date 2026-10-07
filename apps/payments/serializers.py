@@ -1,7 +1,7 @@
 """Serializers for Payments domain (ADR-0014)."""
 from rest_framework import serializers
 from apps.cart.serializers import format_money
-from .models import Payment, PaymentAttempt
+from .models import Payment, PaymentAttempt, Refund
 
 
 class PaymentAttemptSerializer(serializers.ModelSerializer):
@@ -80,3 +80,26 @@ class PaymentInitiateResponseSerializer(serializers.Serializer):
     status = serializers.CharField()
     redirect_url = serializers.CharField()
     provider_reference = serializers.CharField()
+
+
+class RefundSerializer(serializers.ModelSerializer):
+    public_id = serializers.UUIDField(read_only=True)
+    payment_public_id = serializers.UUIDField(source="payment.public_id", read_only=True)
+    order_public_id = serializers.UUIDField(source="order.public_id", read_only=True)
+
+    class Meta:
+        model = Refund
+        fields = [
+            "public_id", "payment_public_id", "order_public_id", "amount",
+            "currency", "status", "reason", "created_at",
+        ]
+        read_only_fields = [
+            "public_id", "payment_public_id", "order_public_id",
+            "currency", "status", "created_at",
+        ]
+
+
+class RefundCreateSerializer(serializers.Serializer):
+    payment_public_id = serializers.UUIDField()
+    amount = serializers.DecimalField(max_digits=12, decimal_places=2, min_value=0.01)
+    reason = serializers.CharField(max_length=255, required=False, allow_blank=True, default="")

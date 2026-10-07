@@ -139,3 +139,35 @@ class User(AbstractBaseUser, PermissionsMixin, PublicIdModel, TimeStampedModel):
             return False
         user_perms = self.get_permission_codes()
         return ("*" in user_perms) or (perm_code in user_perms)
+
+
+class Address(PublicIdModel, TimeStampedModel):
+    """A customer-owned reusable address; orders continue to store snapshots."""
+
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="addresses"
+    )
+    label = models.CharField(max_length=64, blank=True, default="")
+    full_name = models.CharField(max_length=255)
+    phone = models.CharField(max_length=50)
+    address_line1 = models.CharField(max_length=255)
+    address_line2 = models.CharField(max_length=255, blank=True, default="")
+    city = models.CharField(max_length=100)
+    area = models.CharField(max_length=100, blank=True, default="")
+    postal_code = models.CharField(max_length=20, blank=True, default="")
+    country = models.CharField(max_length=100, default="Bangladesh")
+    is_default = models.BooleanField(default=False)
+
+    class Meta:
+        db_table = "users_address"
+        ordering = ["-is_default", "-created_at"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user"],
+                condition=models.Q(is_default=True),
+                name="unique_default_address_per_user",
+            )
+        ]
+
+    def __str__(self):
+        return f"{self.user.email}: {self.label or self.address_line1}"

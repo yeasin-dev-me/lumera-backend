@@ -1,10 +1,11 @@
 """Customer-facing views for Checkout and Orders (ADR-0013, BR-11, BR-13)."""
+from django.db import transaction
 from django.db.models import Sum
 from rest_framework import exceptions, permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from apps.common.pagination import StandardResultsSetPagination
-from .models import Order
+from .models import Order, ReturnRequest, ReturnRequestItem
 from .serializers import (
     CustomerOrderListSerializer,
     OrderCreateSerializer,
@@ -122,3 +123,79 @@ class CustomerOrderTimelineView(APIView):
         serializer = OrderTimelineItemSerializer(order.status_history.all(), many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+
+class CustomerReturnRequestListView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        from .serializers import CustomerReturnRequestSerializer
+        return Response(CustomerReturnRequestSerializer(
+            request.user.return_requests.select_related("order"), many=True
+        ).data)
+
+    def post(self, request):
+        from .serializers import CustomerReturnRequestSerializer, ReturnRequestCreateSerializer
+        serializer = ReturnRequestCreateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        order = Order.objects.filter(
+            public_id=serializer.validated_data["order_public_id"], user=request.user
+        ).first()
+        if not order:
+            raise exceptions.NotFound("Order not found.")
+        with transaction.atomic():
+            order = Order.objects.select_for_update().get(pk=order.pk)
+            if order.status != Order.STATUS_DELIVERED:
+                raise exceptions.ValidationError("Only delivered orders can be returned.")
+            if ReturnRequest.objects.filter(
+                order=order, user=request.user,
+                status__in=[ReturnRequest.STATUS_REQUESTED, ReturnRequest.STATUS_APPROVED],
+            ).exists():
+                raise exceptions.ValidationError("An active return already exists for this order.")
+            result = ReturnRequest.objects.create(
+                order=order, user=request.user, reason=serializer.validated_data["reason"]
+            )
+            order_items = {
+                item.id: item
+                for item in order.items.select_for_update().filter(
+                    id__in=[item["order_item_id"] for item in serializer.validated_data["items"]]
+                )
+            }
+            if len(order_items) != len(serializer.validated_data["items"]):
+                raise exceptions.ValidationError("One or more return items do not belong to this order.")
+            for item_data in serializer.validated_data["items"]:
+                order_item = order_items[item_data["order_item_id"]]
+                returned_quantity = (
+                    ReturnRequestItem.objects.filter(
+                        order_item=order_item,
+                    )
+                    .exclude(return_request__status=ReturnRequest.STATUS_CANCELLED)
+                    .aggregate(total=Sum("quantity"))["total"]
+                    or 0
+                )
+                remaining_quantity = order_item.quantity - returned_quantity
+                if item_data["quantity"] > remaining_quantity:
+                    raise exceptions.ValidationError(
+                        "Requested quantity exceeds the remaining returnable quantity."
+                    )
+                ReturnRequestItem.objects.create(
+                    return_request=result,
+                    order_item=order_item,
+                    quantity=item_data["quantity"],
+                )
+        return Response(CustomerReturnRequestSerializer(result).data, status=status.HTTP_201_CREATED)
+
+
+class CustomerReturnRequestDetailView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, public_id):
+        result = (
+            request.user.return_requests.select_related("order")
+            .prefetch_related("items__order_item")
+            .filter(public_id=public_id)
+            .first()
+        )
+        if not result:
+            raise exceptions.NotFound("Return request not found.")
+        from .serializers import CustomerReturnRequestSerializer
+        return Response(CustomerReturnRequestSerializer(result).data, status=status.HTTP_200_OK)
