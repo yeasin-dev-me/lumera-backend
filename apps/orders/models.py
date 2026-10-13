@@ -40,9 +40,13 @@ class Order(PublicIdModel, TimeStampedModel):
     order_number = models.CharField(max_length=64, unique=True, db_index=True)
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
-        on_delete=models.PROTECT,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
         related_name="orders",
     )
+    guest_email = models.EmailField(blank=True, default="")
+    payment_method = models.CharField(max_length=32, default="cod", blank=True)
     status = models.CharField(
         max_length=32,
         choices=STATUS_CHOICES,

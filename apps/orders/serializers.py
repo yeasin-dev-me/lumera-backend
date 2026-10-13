@@ -17,8 +17,15 @@ class ShippingAddressInputSerializer(serializers.Serializer):
     country = serializers.CharField(max_length=100, required=False, default="Bangladesh")
 
 
+class DirectOrderItemInputSerializer(serializers.Serializer):
+    """Line item in a direct or guest order."""
+
+    product_id = serializers.CharField(required=True)
+    quantity = serializers.IntegerField(required=False, default=1, min_value=1, max_value=20)
+
+
 class OrderCreateSerializer(serializers.Serializer):
-    """Input serializer for POST /api/v1/customer/orders/."""
+    """Input serializer for POST /api/v1/customer/orders/ (supports both Cart & Direct Guest Order)."""
 
     shipping_address = ShippingAddressInputSerializer(required=True)
     customer_notes = serializers.CharField(
@@ -27,6 +34,9 @@ class OrderCreateSerializer(serializers.Serializer):
         allow_blank=True,
         default="",
     )
+    items = DirectOrderItemInputSerializer(many=True, required=False, default=list)
+    guest_email = serializers.EmailField(required=False, allow_blank=True, default="")
+    payment_method = serializers.CharField(max_length=32, required=False, allow_blank=True, default="cod")
 
 
 class ReturnRequestSerializer(serializers.ModelSerializer):
@@ -187,6 +197,8 @@ class OrderDetailSerializer(serializers.ModelSerializer):
             "order_number",
             "status",
             "payment_status",
+            "payment_method",
+            "guest_email",
             "currency",
             "subtotal",
             "shipping_cost",

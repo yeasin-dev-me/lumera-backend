@@ -17,16 +17,16 @@ from .models import Order, OrderItem, OrderStatusHistory
 
 
 def generate_order_number() -> str:
-    """Generate a collision-free unique order number in format LUM-YYYYMMDD-XXXXXX."""
+    """Generate a collision-free unique order number in format PEN-YYYYMMDD-XXXXXX."""
     date_part = datetime.now(dt_timezone.utc).strftime("%Y%m%d")
     chars = string.ascii_uppercase + string.digits
     for _ in range(10):
         random_part = "".join(random.choices(chars, k=6))
-        candidate = f"LUM-{date_part}-{random_part}"
+        candidate = f"PEN-{date_part}-{random_part}"
         if not Order.objects.filter(order_number=candidate).exists():
             return candidate
     # Fallback to microsecond suffix
-    return f"LUM-{date_part}-{int(datetime.now(dt_timezone.utc).timestamp() * 1000) % 1000000:06d}"
+    return f"PEN-{date_part}-{int(datetime.now(dt_timezone.utc).timestamp() * 1000) % 1000000:06d}"
 
 
 def get_checkout_preview(user) -> dict:
@@ -216,6 +216,176 @@ def create_order_from_cart(user, shipping_address: dict, customer_notes: str = "
         cart.save(update_fields=["updated_at"])
 
         # 9. Dispatch order placed notification (ADR-0015)
+        safe_dispatch_order_notification(order, Notification.EVENT_ORDER_PLACED)
+
+    return order
+
+
+def create_direct_order(
+    shipping_address: dict,
+    items: list[dict],
+    user=None,
+    guest_email: str = "",
+    customer_notes: str = "",
+    payment_method: str = "cod",
+) -> Order:
+    """Atomic, row-locked order creation for guest or direct checkout (BR-11a).
+
+    Step 1. Resolve and lock referenced products
+    Step 2. Validate product storefront eligibility and live stock
+    Step 3. Calculate authoritative price snapshots and line totals
+    Step 4. Persist Order and OrderItems
+    Step 5. Deduct stock quantities atomically
+    Step 6. If user is authenticated, clear items from user's server cart
+    Step 7. Dispatch order notification
+    """
+    from uuid import UUID
+
+    if not items:
+        raise exceptions.ValidationError({"items": ["At least one item is required to place an order."]})
+
+    with transaction.atomic():
+        resolved_items = []
+        for item_data in items:
+            raw_id = item_data.get("product_id")
+            try:
+                qty = int(item_data.get("quantity", 1))
+            except (ValueError, TypeError):
+                qty = 1
+
+            if qty <= 0:
+                raise exceptions.ValidationError({"items": ["Item quantity must be greater than zero."]})
+            if qty > 20:
+                raise exceptions.ValidationError({"items": ["Cannot exceed maximum quantity of 20 items per product line."]})
+
+            prod = None
+            try:
+                val = UUID(str(raw_id))
+                prod = Product.objects.filter(public_id=val).first()
+            except (ValueError, AttributeError):
+                if str(raw_id).isdigit():
+                    prod = Product.objects.filter(pk=int(raw_id)).first()
+                else:
+                    prod = Product.objects.filter(sku=str(raw_id)).first()
+
+            if not prod:
+                raise exceptions.NotFound(f"Product '{raw_id}' not found.")
+
+            resolved_items.append({"product_pk": prod.pk, "quantity": qty})
+
+        # Lock referenced products to prevent concurrent overselling (BR-08)
+        product_pks = [it["product_pk"] for it in resolved_items]
+        locked_products = {
+            p.id: p
+            for p in Product.objects.select_for_update()
+            .filter(id__in=product_pks)
+            .select_related("category")
+        }
+
+        subtotal = Decimal("0.00")
+        lines_to_create = []
+
+        for it in resolved_items:
+            product = locked_products.get(it["product_pk"])
+            qty = it["quantity"]
+
+            if not product or not is_storefront_eligible(product):
+                prod_name = product.name if product else "Item"
+                raise ProductUnavailable(
+                    f"Product '{prod_name}' is no longer available for purchase."
+                )
+
+            if product.stock_quantity < qty:
+                raise InsufficientStock(
+                    f"Insufficient stock for '{product.name}'. "
+                    f"Requested: {qty}, Available: {product.stock_quantity}."
+                )
+
+            unit_price = Decimal(str(product.effective_price)).quantize(
+                TWO_PLACES, rounding=ROUND_HALF_UP
+            )
+            line_total = (unit_price * Decimal(str(qty))).quantize(
+                TWO_PLACES, rounding=ROUND_HALF_UP
+            )
+            subtotal += line_total
+
+            lines_to_create.append(
+                {
+                    "product": product,
+                    "product_name": product.name,
+                    "product_sku": product.sku,
+                    "product_image": primary_image_url(product) or "",
+                    "unit_price": unit_price,
+                    "quantity": qty,
+                    "line_total": line_total,
+                }
+            )
+
+        shipping_cost = Decimal("0.00")
+        discount_total = Decimal("0.00")
+        total = (subtotal + shipping_cost - discount_total).quantize(
+            TWO_PLACES, rounding=ROUND_HALF_UP
+        )
+
+        order_number = generate_order_number()
+
+        order = Order.objects.create(
+            order_number=order_number,
+            user=user if (user and getattr(user, "is_authenticated", False)) else None,
+            guest_email=guest_email.strip() if guest_email else "",
+            payment_method=payment_method.strip() or "cod",
+            status=Order.STATUS_PENDING,
+            payment_status=Order.PAYMENT_PENDING,
+            currency="USD",
+            subtotal=subtotal,
+            shipping_cost=shipping_cost,
+            discount_total=discount_total,
+            total=total,
+            shipping_full_name=shipping_address["full_name"],
+            shipping_phone=shipping_address["phone"],
+            shipping_address_line1=shipping_address["address"],
+            shipping_address_line2=shipping_address.get("address_line2", "") or "",
+            shipping_city=shipping_address["city"],
+            shipping_area=shipping_address.get("area", "") or "",
+            shipping_postal_code=shipping_address.get("postal_code", "") or "",
+            shipping_country=shipping_address.get("country", "Bangladesh") or "Bangladesh",
+            customer_notes=customer_notes.strip() if customer_notes else "",
+        )
+
+        for line in lines_to_create:
+            OrderItem.objects.create(
+                order=order,
+                product=line["product"],
+                product_name=line["product_name"],
+                product_sku=line["product_sku"],
+                product_image=line["product_image"],
+                unit_price=line["unit_price"],
+                quantity=line["quantity"],
+                line_total=line["line_total"],
+            )
+            prod = line["product"]
+            prod.stock_quantity = prod.stock_quantity - line["quantity"]
+            prod.save(update_fields=["stock_quantity", "updated_at"])
+
+        actor_desc = (
+            f"Order confirmed by customer ({user.email})"
+            if (user and getattr(user, "is_authenticated", False))
+            else "Order confirmed via guest checkout form"
+        )
+        OrderStatusHistory.objects.create(
+            order=order,
+            from_status="",
+            to_status=Order.STATUS_PENDING,
+            changed_by=user if (user and getattr(user, "is_authenticated", False)) else None,
+            reason=actor_desc,
+        )
+
+        if user and getattr(user, "is_authenticated", False):
+            CartItem.objects.filter(
+                cart__user=user,
+                product__in=[l["product"] for l in lines_to_create]
+            ).delete()
+
         safe_dispatch_order_notification(order, Notification.EVENT_ORDER_PLACED)
 
     return order

@@ -5,7 +5,7 @@ from typing import Any
 import uuid
 from django.conf import settings
 from django.db import transaction
-from django.db.models import Sum
+from django.db.models import Q, Sum
 from django.utils import timezone
 from rest_framework import exceptions
 from apps.notifications.models import Notification
@@ -50,7 +50,7 @@ def initiate_payment(
 ) -> tuple[Payment, dict[str, Any]]:
     """Initiate a payment attempt for a payable order (ADR-0014).
     
-    1. Authenticates order ownership (Customer isolation).
+    1. Authenticates order ownership (Customer isolation or guest order).
     2. Validates order is payable (not already paid, not cancelled).
     3. Locks order row.
     4. Authoritatively derives amount from order.total.
@@ -65,12 +65,19 @@ def initiate_payment(
         except (ValueError, TypeError):
             raise exceptions.NotFound("Order not found.")
 
-        # Customer isolation: Must belong to authenticated user
-        order = (
-            Order.objects.select_for_update()
-            .filter(public_id=val_uuid, user=user)
-            .first()
-        )
+        # Customer isolation: Must belong to authenticated user or be a guest order
+        if user and getattr(user, "is_authenticated", False):
+            order = (
+                Order.objects.select_for_update()
+                .filter(Q(user=user) | Q(user__isnull=True), public_id=val_uuid)
+                .first()
+            )
+        else:
+            order = (
+                Order.objects.select_for_update()
+                .filter(user__isnull=True, public_id=val_uuid)
+                .first()
+            )
         if not order:
             raise exceptions.NotFound("Order not found.")
 

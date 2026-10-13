@@ -68,11 +68,10 @@ class StorefrontProductListView(generics.ListAPIView):
 
 
 class StorefrontProductDetailView(generics.RetrieveAPIView):
-    """Retrieve details for a single active and visible product by slug (BR-04)."""
+    """Retrieve details for a single active and visible product by slug or public_id (BR-04)."""
 
     permission_classes = [AllowAny]
     serializer_class = ProductDetailSerializer
-    lookup_field = "slug"
 
     def get_queryset(self):
         return (
@@ -84,6 +83,18 @@ class StorefrontProductDetailView(generics.RetrieveAPIView):
             .select_related("category")
             .prefetch_related("images")
         )
+
+    def get_object(self):
+        slug_or_id = self.kwargs.get("slug")
+        queryset = self.get_queryset()
+        try:
+            val_uuid = uuid.UUID(str(slug_or_id))
+            obj = queryset.filter(public_id=val_uuid).first()
+            if obj:
+                return obj
+        except (ValueError, TypeError):
+            pass
+        return get_object_or_404(queryset, slug=slug_or_id)
 
 
 # --- CMS Admin Views ---

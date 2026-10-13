@@ -1,5 +1,6 @@
 """Customer-facing views for Payment Initiation and Status (ADR-0014)."""
 import uuid
+from django.db.models import Q
 from rest_framework import exceptions, permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -19,7 +20,7 @@ class CustomerOrderPaymentView(APIView):
     GET /api/v1/customer/orders/{public_id}/payment/ - Retrieve authoritative payment status.
     """
 
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.AllowAny]
 
     def post(self, request, public_id):
         serializer = PaymentInitiateInputSerializer(data=request.data)
@@ -28,8 +29,10 @@ class CustomerOrderPaymentView(APIView):
         gateway_id = serializer.validated_data.get("gateway", "sslcommerz")
         return_url = serializer.validated_data.get("return_url", "")
 
+        user = request.user if request.user.is_authenticated else None
+
         payment, init_res = initiate_payment(
-            user=request.user,
+            user=user,
             order_public_id=public_id,
             gateway_id=gateway_id,
             return_url=return_url,
@@ -56,7 +59,14 @@ class CustomerOrderPaymentView(APIView):
             raise exceptions.NotFound("Order not found.")
 
         # Customer isolation
-        order = Order.objects.filter(public_id=val_uuid, user=request.user).first()
+        if request.user.is_authenticated:
+            order = Order.objects.filter(
+                Q(user=request.user) | Q(user__isnull=True),
+                public_id=val_uuid,
+            ).first()
+        else:
+            order = Order.objects.filter(user__isnull=True, public_id=val_uuid).first()
+
         if not order:
             raise exceptions.NotFound("Order not found.")
 

@@ -1,6 +1,6 @@
 """Customer-facing views for Checkout and Orders (ADR-0013, BR-11, BR-13)."""
 from django.db import transaction
-from django.db.models import Sum
+from django.db.models import Q, Sum
 from rest_framework import exceptions, permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -11,7 +11,7 @@ from .serializers import (
     OrderCreateSerializer,
     OrderDetailSerializer,
 )
-from .services import create_order_from_cart, get_checkout_preview
+from .services import create_direct_order, create_order_from_cart, get_checkout_preview
 
 
 class CheckoutPreviewView(APIView):
@@ -26,13 +26,16 @@ class CheckoutPreviewView(APIView):
 
 class CustomerOrderListView(APIView):
     """GET /api/v1/customer/orders/ - List authenticated customer orders.
-    POST /api/v1/customer/orders/ - Create new order from server-side cart.
+    POST /api/v1/customer/orders/ - Create new order (guest or authenticated, BR-11a).
     """
 
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.AllowAny]
     pagination_class = StandardResultsSetPagination
 
     def get(self, request):
+        if not request.user.is_authenticated:
+            raise exceptions.NotAuthenticated("Authentication required to view order history.")
+
         orders = (
             Order.objects.filter(user=request.user)
             .annotate(item_count=Sum("items__quantity"))
@@ -49,28 +52,60 @@ class CustomerOrderListView(APIView):
 
         shipping_address = serializer.validated_data["shipping_address"]
         customer_notes = serializer.validated_data.get("customer_notes", "")
+        items = serializer.validated_data.get("items", [])
+        guest_email = serializer.validated_data.get("guest_email", "")
+        payment_method = serializer.validated_data.get("payment_method", "cod")
 
-        order = create_order_from_cart(
-            user=request.user,
-            shipping_address=shipping_address,
-            customer_notes=customer_notes,
-        )
+        user = request.user if request.user.is_authenticated else None
+
+        if items:
+            order = create_direct_order(
+                shipping_address=shipping_address,
+                items=items,
+                user=user,
+                guest_email=guest_email,
+                customer_notes=customer_notes,
+                payment_method=payment_method,
+            )
+        else:
+            if not user:
+                raise exceptions.ValidationError(
+                    {"items": ["Cart items are required for guest checkout."]}
+                )
+            order = create_order_from_cart(
+                user=user,
+                shipping_address=shipping_address,
+                customer_notes=customer_notes,
+            )
+            if payment_method:
+                order.payment_method = payment_method
+                order.save(update_fields=["payment_method"])
 
         response_serializer = OrderDetailSerializer(order)
         return Response(response_serializer.data, status=status.HTTP_201_CREATED)
 
 
 class CustomerOrderDetailView(APIView):
-    """GET /api/v1/customer/orders/{public_id}/ - Retrieve customer's single order."""
+    """GET /api/v1/customer/orders/{public_id}/ - Retrieve single order (guest or authenticated)."""
 
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.AllowAny]
 
     def get(self, request, public_id):
-        order = (
-            Order.objects.filter(user=request.user, public_id=public_id)
-            .prefetch_related("items__product", "status_history")
-            .first()
-        )
+        if request.user.is_authenticated:
+            order = (
+                Order.objects.filter(
+                    Q(user=request.user) | Q(user__isnull=True),
+                    public_id=public_id,
+                )
+                .prefetch_related("items__product", "status_history")
+                .first()
+            )
+        else:
+            order = (
+                Order.objects.filter(user__isnull=True, public_id=public_id)
+                .prefetch_related("items__product", "status_history")
+                .first()
+            )
         if not order:
             raise exceptions.NotFound("Order not found.")
 
@@ -107,14 +142,24 @@ class CustomerOrderCancelView(APIView):
 class CustomerOrderTimelineView(APIView):
     """GET /api/v1/customer/orders/{public_id}/timeline/ - Retrieve order audit progression."""
 
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.AllowAny]
 
     def get(self, request, public_id):
-        order = (
-            Order.objects.filter(user=request.user, public_id=public_id)
-            .prefetch_related("status_history")
-            .first()
-        )
+        if request.user.is_authenticated:
+            order = (
+                Order.objects.filter(
+                    Q(user=request.user) | Q(user__isnull=True),
+                    public_id=public_id,
+                )
+                .prefetch_related("status_history")
+                .first()
+            )
+        else:
+            order = (
+                Order.objects.filter(user__isnull=True, public_id=public_id)
+                .prefetch_related("status_history")
+                .first()
+            )
         if not order:
             raise exceptions.NotFound("Order not found.")
 
