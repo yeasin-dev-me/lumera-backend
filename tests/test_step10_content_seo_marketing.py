@@ -259,7 +259,7 @@ def test_storefront_config_exposes_marketing_keys_without_secrets():
     assert res.status_code == status.HTTP_200_OK
     data = res.json()
 
-    assert data["site_name"] == "Lumera"
+    assert data["site_name"] == "Penguin Mart"
     assert "announcement_text" in data
     assert "meta_pixel_id" in data
     assert "ga4_measurement_id" in data

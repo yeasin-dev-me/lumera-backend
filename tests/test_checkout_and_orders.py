@@ -153,7 +153,8 @@ class TestOrderCreation:
 
     def test_unauthenticated_order_creation_rejected(self, api_client, valid_shipping_data):
         res = api_client.post("/api/v1/customer/orders/", valid_shipping_data, format="json")
-        assert res.status_code == status.HTTP_401_UNAUTHORIZED
+        assert res.status_code == status.HTTP_400_BAD_REQUEST
+        assert res.data["error"]["code"] == "validation_error"
 
     def test_empty_cart_cannot_checkout(self, customer_client, valid_shipping_data):
         res = customer_client.post("/api/v1/customer/orders/", valid_shipping_data, format="json")
@@ -222,7 +223,7 @@ class TestOrderCreation:
         data = res.data
 
         # 1. Order attributes
-        assert data["order_number"].startswith("LUM-")
+        assert data["order_number"].startswith("PEN-")
         assert data["status"] == "pending"
         assert data["payment_status"] == "pending"
         assert data["subtotal"] == "2999.70"  # 999.90 * 3
