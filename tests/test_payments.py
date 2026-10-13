@@ -422,7 +422,7 @@ class PaymentAPITests(TestCase):
     def test_unauthenticated_initiation_rejected(self):
         url = f"/api/v1/customer/orders/{self.order.public_id}/payment/"
         res = self.client.post(url, {})
-        self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(res.status_code, status.HTTP_404_NOT_FOUND)
 
     @mock.patch("urllib.request.urlopen")
     def test_authenticated_customer_initiation_success(self, mock_urlopen):
