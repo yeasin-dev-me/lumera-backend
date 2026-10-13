@@ -9,18 +9,18 @@ def config_view(request):
     """Returns safe public storefront config."""
     return JsonResponse(
         {
-            "site_name": "Lumera",
+            "site_name": "Penguin Mart",
             "currency": "USD",
             "version": "v1",
             "announcement_text": getattr(
                 settings,
                 "LUMERA_ANNOUNCEMENT_TEXT",
-                "Complimentary shipping on wholesale orders over $150",
+                "Complimentary shipping on orders over $75 · Welcome to Penguin Mart",
             ),
             "meta_pixel_id": getattr(settings, "META_PIXEL_ID", ""),
             "ga4_measurement_id": getattr(settings, "GA4_MEASUREMENT_ID", ""),
-            "default_seo_title": "Lumera | Modern Skincare & Pure Beauty",
-            "default_seo_description": "Experience modern, thoughtful skincare engineered for radiance and purity.",
+            "default_seo_title": "Penguin Mart | Skin Care & Beauty",
+            "default_seo_description": "Penguin Mart — Pure, thoughtful skincare & beauty engineered for radiance and purity.",
         }
     )
 

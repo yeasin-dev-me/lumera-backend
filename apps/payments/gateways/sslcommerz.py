@@ -56,7 +56,7 @@ class SSLCommerzGateway(PaymentGateway):
             # Order details
             "shipping_method": "NO",
             "num_of_item": str(max(order.items.count(), 1)),
-            "product_name": f"Lumera Order {order.order_number}",
+            "product_name": f"Penguin Mart Order {order.order_number}",
             "product_category": "Skincare",
             "product_profile": "general",
         }

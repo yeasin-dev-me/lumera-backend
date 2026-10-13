@@ -76,7 +76,7 @@ class Command(BaseCommand):
                 "description": "Gentle, pH-balanced botanical purifying cleansers and hydrating flower mists.",
                 "image_url": "https://images.unsplash.com/photo-1556228720-195a672e8a03?auto=format&fit=crop&w=600&q=80",
                 "sort_order": 1,
-                "seo_title": "Wholesale Botanical Cleansers & Toners | Lumera",
+                "seo_title": "Wholesale Botanical Cleansers & Toners | Penguin Mart",
                 "seo_description": "Clean, pH-balanced botanical skincare cleansers for professional wholesale clients.",
             },
             {
@@ -85,7 +85,7 @@ class Command(BaseCommand):
                 "description": "High-potency botanical actives, hyaluronic complexes, and brightening vitamin serums.",
                 "image_url": "https://images.unsplash.com/photo-1620916566398-39f1143ab7be?auto=format&fit=crop&w=600&q=80",
                 "sort_order": 2,
-                "seo_title": "Active Botanical Serums & Treatment Elixirs | Lumera",
+                "seo_title": "Active Botanical Serums & Treatment Elixirs | Penguin Mart",
                 "seo_description": "Concentrated clinical serums formulated with organic botanicals and bio-peptides.",
             },
             {
@@ -94,7 +94,7 @@ class Command(BaseCommand):
                 "description": "Rich ceramide balms, peptide barrier creams, and weightless hydration gels.",
                 "image_url": "https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?auto=format&fit=crop&w=600&q=80",
                 "sort_order": 3,
-                "seo_title": "Wholesale Barrier Creams & Moisturizers | Lumera",
+                "seo_title": "Wholesale Barrier Creams & Moisturizers | Penguin Mart",
                 "seo_description": "Nourishing lipid and ceramide facial moisturizers for retail spas and aesthetics salons.",
             },
             {
@@ -103,7 +103,7 @@ class Command(BaseCommand):
                 "description": "Cold-pressed botanical seed oils and bio-fermented nourishing facial essences.",
                 "image_url": "https://images.unsplash.com/photo-1608248597359-0010f37f3747?auto=format&fit=crop&w=600&q=80",
                 "sort_order": 4,
-                "seo_title": "Cold-Pressed Botanical Facial Oils | Lumera",
+                "seo_title": "Cold-Pressed Botanical Facial Oils | Penguin Mart",
                 "seo_description": "Pure plant lipids, squalane, and rosehip elixirs for deep cellular radiance.",
             },
             {
@@ -112,7 +112,7 @@ class Command(BaseCommand):
                 "description": "Caffeine peptide eye creams and antioxidant squalane lip repair treatments.",
                 "image_url": "https://images.unsplash.com/photo-1512290900672-1f55b9e078c1?auto=format&fit=crop&w=600&q=80",
                 "sort_order": 5,
-                "seo_title": "Targeted Eye & Lip Botanical Treatments | Lumera",
+                "seo_title": "Targeted Eye & Lip Botanical Treatments | Penguin Mart",
                 "seo_description": "Specialized restorative care for delicate ocular and perioral zones.",
             },
             {
@@ -121,7 +121,7 @@ class Command(BaseCommand):
                 "description": "Broad-spectrum invisible mineral SPF 50 shields infused with calming centella.",
                 "image_url": "https://images.unsplash.com/photo-1598440947619-2c35fc9aa908?auto=format&fit=crop&w=600&q=80",
                 "sort_order": 6,
-                "seo_title": "Mineral Sunscreen & Environmental Defense | Lumera",
+                "seo_title": "Mineral Sunscreen & Environmental Defense | Penguin Mart",
                 "seo_description": "Clean zinc oxide sunscreens providing photo-protection and microbiome defense.",
             },
         ]
@@ -159,7 +159,7 @@ class Command(BaseCommand):
                     "An ultra-fine restorative floral mist with organic Bulgarian damask rose water, "
                     "chamomile hydrosol, and bioactive hyaluronic acid. Restores dermal pH instantly."
                 ),
-                "seo_title": "Botanical Hydration Mist & Rose Floral Toner | Lumera",
+                "seo_title": "Botanical Hydration Mist & Rose Floral Toner | Penguin Mart",
                 "seo_description": "Organic rose water mist with bio-fermented hyaluronic acid for glowing hydration.",
                 "images": [
                     "https://images.unsplash.com/photo-1556228720-195a672e8a03?auto=format&fit=crop&w=800&q=80",
@@ -180,7 +180,7 @@ class Command(BaseCommand):
                     "Sulfate-free coconut glucoside cleanser infused with wild German chamomile, "
                     "aloe vera juice, and cucumber distillate. Melts away impurities without stripping moisture."
                 ),
-                "seo_title": "Gentle Chamomile Foaming Cleanser | Lumera",
+                "seo_title": "Gentle Chamomile Foaming Cleanser | Penguin Mart",
                 "seo_description": "Sulfate-free soothing facial cleanser suitable for hypersensitive and barrier-compromised skin.",
                 "images": [
                     "https://images.unsplash.com/photo-1556228720-195a672e8a03?auto=format&fit=crop&w=800&q=80",
@@ -200,7 +200,7 @@ class Command(BaseCommand):
                     "Golden cold-pressed lipid elixir combining Chilean rosehip seed, Kalahari melon, "
                     "sea buckthorn fruit, and sugarcane squalane. Delivers luminous non-greasy radiance."
                 ),
-                "seo_title": "Luminous Glow Bio-Active Facial Oil | Lumera",
+                "seo_title": "Luminous Glow Bio-Active Facial Oil | Penguin Mart",
                 "seo_description": "Cold-pressed rosehip and sea buckthorn botanical face oil for barrier lipid replenishment.",
                 "images": [
                     "https://images.unsplash.com/photo-1608248597359-0010f37f3747?auto=format&fit=crop&w=800&q=80",
@@ -221,7 +221,7 @@ class Command(BaseCommand):
                     "Clinical 15% stabilized tetrahexyldecyl ascorbate coupled with ferulic acid, "
                     "Kakadu plum extract, and vitamin E. Defends against oxidative damage and brightens complexion."
                 ),
-                "seo_title": "Cellular Vitamin C Radiance Serum | Lumera",
+                "seo_title": "Cellular Vitamin C Radiance Serum | Penguin Mart",
                 "seo_description": "Clinical 15% THD ascorbate antioxidant serum with Kakadu plum and botanical ferulic acid.",
                 "images": [
                     "https://images.unsplash.com/photo-1620916566398-39f1143ab7be?auto=format&fit=crop&w=800&q=80",
@@ -242,7 +242,7 @@ class Command(BaseCommand):
                     "Five molecular weights of sodium hyaluronate combined with Tremella mushroom extract "
                     "and panthenol B5 for deep epidermis hydration and plumpness."
                 ),
-                "seo_title": "Multi-Molecular Hyaluronic Acid Serum | Lumera",
+                "seo_title": "Multi-Molecular Hyaluronic Acid Serum | Penguin Mart",
                 "seo_description": "Five molecular weights of hyaluronic acid plus snow mushroom for deep cell hydration.",
                 "images": [
                     "https://images.unsplash.com/photo-1620916566398-39f1143ab7be?auto=format&fit=crop&w=800&q=80",
@@ -262,7 +262,7 @@ class Command(BaseCommand):
                     "Physiological 3:1:1 lipid ratio of ceramide NP/AP/EOP, plant cholesterol, and essential fatty acids. "
                     "Clinically repairs damaged skin barriers within 48 hours."
                 ),
-                "seo_title": "Ceramide Barrier Defense Cream | Lumera",
+                "seo_title": "Ceramide Barrier Defense Cream | Penguin Mart",
                 "seo_description": "Clinical biomimetic ceramide complex for eczema-prone, sensitized skin barrier recovery.",
                 "images": [
                     "https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?auto=format&fit=crop&w=800&q=80",
@@ -283,7 +283,7 @@ class Command(BaseCommand):
                     "Weightless water-gel moisturizer packed with signal hexapeptides, green tea catechins, "
                     "and marine algae polysaccharides. Perfect base for makeup and hot climates."
                 ),
-                "seo_title": "Velvet Cloud Dew Peptide Gel Cream | Lumera",
+                "seo_title": "Velvet Cloud Dew Peptide Gel Cream | Penguin Mart",
                 "seo_description": "Weightless peptide water-burst gel cream delivering 72-hour non-comedogenic moisture.",
                 "images": [
                     "https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?auto=format&fit=crop&w=800&q=80",
@@ -303,7 +303,7 @@ class Command(BaseCommand):
                     "Natural 2% retinol alternative derived from Psoralea corylifolia seeds, infused into "
                     "organic evening primrose and blue tansy essential oils. Gently renews cellular texture."
                 ),
-                "seo_title": "Nourishing Bakuchiol Night Elixir | Lumera",
+                "seo_title": "Nourishing Bakuchiol Night Elixir | Penguin Mart",
                 "seo_description": "Gentle 2% plant retinol alternative with soothing blue tansy and evening primrose oil.",
                 "images": [
                     "https://images.unsplash.com/photo-1608248597359-0010f37f3747?auto=format&fit=crop&w=800&q=80",
@@ -323,7 +323,7 @@ class Command(BaseCommand):
                     "Silky under-eye treatment targeting puffiness and dark circles with green coffee extract, "
                     "Argireline peptide, and mica minerals for instant brightening."
                 ),
-                "seo_title": "Awakening Caffeine & Peptide Eye Balm | Lumera",
+                "seo_title": "Awakening Caffeine & Peptide Eye Balm | Penguin Mart",
                 "seo_description": "Green coffee and peptide de-puffing eye balm for visible dark circle reduction.",
                 "images": [
                     "https://images.unsplash.com/photo-1512290900672-1f55b9e078c1?auto=format&fit=crop&w=800&q=80",
@@ -343,7 +343,7 @@ class Command(BaseCommand):
                     "Decadent berry and botanical butter conditioning lip treatment with olive squalane, "
                     "mango kernel butter, and vitamin E. Heals cracked dry lips overnight."
                 ),
-                "seo_title": "Overnight Squalane Conditioning Lip Mask | Lumera",
+                "seo_title": "Overnight Squalane Conditioning Lip Mask | Penguin Mart",
                 "seo_description": "Restorative botanical butter and squalane lip treatment for plump, hydrated lips.",
                 "images": [
                     "https://images.unsplash.com/photo-1512290900672-1f55b9e078c1?auto=format&fit=crop&w=800&q=80",
@@ -363,7 +363,7 @@ class Command(BaseCommand):
                     "Non-nano 18% zinc oxide sunscreen that leaves zero white cast on all skin tones. "
                     "Enriched with centella asiatica, niacinamide, and ectoin for urban pollution shield."
                 ),
-                "seo_title": "Invisible Mineral Shield SPF 50+ Broad Spectrum | Lumera",
+                "seo_title": "Invisible Mineral Shield SPF 50+ Broad Spectrum | Penguin Mart",
                 "seo_description": "Clean non-nano zinc sunscreen SPF 50+ with zero white cast and skin-calming centella.",
                 "images": [
                     "https://images.unsplash.com/photo-1598440947619-2c35fc9aa908?auto=format&fit=crop&w=800&q=80",
@@ -383,7 +383,7 @@ class Command(BaseCommand):
                     "Refreshing water-burst sunscreen lotion with 49% organic Centella Asiatica leaf water. "
                     "Instantly cools sensitized skin while providing photostable daily UV defense."
                 ),
-                "seo_title": "Centella Asiatica Calming Barrier Sun Gel SPF 50 | Lumera",
+                "seo_title": "Centella Asiatica Calming Barrier Sun Gel SPF 50 | Penguin Mart",
                 "seo_description": "Cooling soothing centella sunscreen lotion designed for sensitive and blemish-prone skin.",
                 "images": [
                     "https://images.unsplash.com/photo-1598440947619-2c35fc9aa908?auto=format&fit=crop&w=800&q=80",

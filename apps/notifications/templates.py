@@ -42,14 +42,14 @@ def render_html_wrapper(title: str, preheader: str, content_html: str) -> str:
   </div>
   <div class="container">
     <div class="header">
-      <h1>LUMERA</h1>
-      <p style="margin: 6px 0 0; font-size: 12px; opacity: 0.85;">Botanical Skincare & Science</p>
+      <h1>PENGUIN MART</h1>
+      <p style="margin: 6px 0 0; font-size: 12px; opacity: 0.85;">Skin Care &amp; Beauty</p>
     </div>
     <div class="content">
       {content_html}
     </div>
     <div class="footer">
-      <p style="margin: 0 0 8px;">Lumera Botanical Laboratories &bull; Wholesale Skincare</p>
+      <p style="margin: 0 0 8px;">Penguin Mart &bull; Skin Care &amp; Beauty</p>
       <p style="margin: 0;"><a href="{site_url}" style="color: #1A362D; text-decoration: underline;">Visit Storefront</a> &bull; <a href="{site_url}/account/communication-preferences" style="color: #6C757D; text-decoration: underline;">Communication Preferences</a></p>
     </div>
   </div>
@@ -82,11 +82,11 @@ def render_template(
 
         text = (
             f"Hello {customer_name},\n\n"
-            f"Thank you for placing order {order_num} with Lumera.\n"
+            f"Thank you for placing order {order_num} with Penguin Mart.\n"
             f"Order Total: {order.total} {order.currency}\n"
             f"Shipping To: {getattr(order, 'shipping_address_line1', '')}, {getattr(order, 'shipping_city', '')}\n\n"
             f"View your order: {view_url}\n\n"
-            f"Best regards,\nThe Lumera Team"
+            f"Best regards,\nThe Penguin Mart Team"
         )
         html_content = f"""
           <h2 style="margin-top:0; color:#1A362D;">Thank you for your order!</h2>
@@ -101,7 +101,7 @@ def render_template(
             <a href="{view_url}" class="btn">View Order Details</a>
           </div>
         """
-        html = render_html_wrapper(subject, f"Your Lumera order {order_num} has been confirmed.", html_content)
+        html = render_html_wrapper(subject, f"Your Penguin Mart order {order_num} has been confirmed.", html_content)
         return subject, text, html
 
     # 2. PAYMENT CONFIRMED
@@ -115,7 +115,7 @@ def render_template(
             f"We have received payment for order {order_num}.\n"
             f"Amount Paid: {order.total} {order.currency}\n\n"
             f"View your order: {view_url}\n\n"
-            f"Best regards,\nThe Lumera Team"
+            f"Best regards,\nThe Penguin Mart Team"
         )
         html_content = f"""
           <h2 style="margin-top:0; color:#1A362D;">Payment Confirmed</h2>
@@ -138,7 +138,7 @@ def render_template(
             f"Hello {customer_name},\n\n"
             f"The payment attempt for order {order_num} was unsuccessful.\n"
             f"Please visit your account to retry payment: {view_url}\n\n"
-            f"Best regards,\nThe Lumera Team"
+            f"Best regards,\nThe Penguin Mart Team"
         )
         html_content = f"""
           <h2 style="margin-top:0; color:#D32F2F;">Payment Could Not Be Processed</h2>
@@ -161,7 +161,7 @@ def render_template(
             f"Hello {customer_name},\n\n"
             f"Your order {order_num} has entered processing at our distribution center.\n"
             f"Track progress: {view_url}\n\n"
-            f"Best regards,\nThe Lumera Team"
+            f"Best regards,\nThe Penguin Mart Team"
         )
         html_content = f"""
           <h2 style="margin-top:0; color:#1A362D;">Order is Being Prepared</h2>
@@ -190,7 +190,7 @@ def render_template(
             f"Tracking Number: {tracking_num}\n"
             + (f"Tracking Link: {tracking_url}\n" if tracking_url else "")
             + f"\nView order: {view_url}\n\n"
-            f"Best regards,\nThe Lumera Team"
+            f"Best regards,\nThe Penguin Mart Team"
         )
         html_content = f"""
           <h2 style="margin-top:0; color:#1A362D;">Your Order Has Shipped!</h2>
@@ -217,9 +217,9 @@ def render_template(
         text = (
             f"Hello {customer_name},\n\n"
             f"Your order {order_num} has been delivered.\n"
-            f"Thank you for shopping with Lumera.\n\n"
+            f"Thank you for shopping with Penguin Mart.\n\n"
             f"View order: {view_url}\n\n"
-            f"Best regards,\nThe Lumera Team"
+            f"Best regards,\nThe Penguin Mart Team"
         )
         html_content = f"""
           <h2 style="margin-top:0; color:#1A362D;">Package Delivered</h2>
@@ -242,7 +242,7 @@ def render_template(
             f"Hello {customer_name},\n\n"
             f"Your order {order_num} has been cancelled.\n"
             f"View order details: {view_url}\n\n"
-            f"Best regards,\nThe Lumera Team"
+            f"Best regards,\nThe Penguin Mart Team"
         )
         html_content = f"""
           <h2 style="margin-top:0; color:#1A362D;">Order Cancellation Notice</h2>
@@ -266,7 +266,7 @@ def render_template(
             f"We have received your return request #{ret_id[:8]}.\n"
             f"Our team will review the request within 1-2 business days.\n\n"
             f"Check status: {view_url}\n\n"
-            f"Best regards,\nThe Lumera Team"
+            f"Best regards,\nThe Penguin Mart Team"
         )
         html_content = f"""
           <h2 style="margin-top:0; color:#1A362D;">Return Request Received</h2>
@@ -288,7 +288,7 @@ def render_template(
             f"Hello {customer_name},\n\n"
             f"Your return request has been approved. Please follow the instructions to dispatch items.\n\n"
             f"View instructions: {view_url}\n\n"
-            f"Best regards,\nThe Lumera Team"
+            f"Best regards,\nThe Penguin Mart Team"
         )
         html_content = f"""
           <h2 style="margin-top:0; color:#1A362D;">Return Request Approved</h2>
@@ -310,7 +310,7 @@ def render_template(
             f"Hello {customer_name},\n\n"
             f"Your return request could not be approved at this time.\n\n"
             f"View details: {view_url}\n\n"
-            f"Best regards,\nThe Lumera Team"
+            f"Best regards,\nThe Penguin Mart Team"
         )
         html_content = f"""
           <h2 style="margin-top:0; color:#1A362D;">Return Request Update</h2>
@@ -332,7 +332,7 @@ def render_template(
             f"Hello {customer_name},\n\n"
             f"We have received your returned package at our fulfillment lab.\n\n"
             f"View details: {view_url}\n\n"
-            f"Best regards,\nThe Lumera Team"
+            f"Best regards,\nThe Penguin Mart Team"
         )
         html_content = f"""
           <h2 style="margin-top:0; color:#1A362D;">Returned Items Received</h2>
@@ -356,7 +356,7 @@ def render_template(
             f"Hello {customer_name},\n\n"
             f"A refund of {amt} {curr} has been processed for your account.\n\n"
             f"View order records: {view_url}\n\n"
-            f"Best regards,\nThe Lumera Team"
+            f"Best regards,\nThe Penguin Mart Team"
         )
         html_content = f"""
           <h2 style="margin-top:0; color:#1A362D;">Refund Processed</h2>
@@ -371,28 +371,28 @@ def render_template(
 
     # 13. ACCOUNT WELCOME
     elif event_type == Notification.EVENT_ACCOUNT_WELCOME:
-        subject = "Welcome to Lumera Botanical Skincare"
+        subject = "Welcome to Penguin Mart Skin Care & Beauty"
         browse_url = f"{site_url}/products"
 
         text = (
             f"Hello {customer_name},\n\n"
-            f"Welcome to Lumera! Your wholesale skincare account has been created.\n"
-            f"Explore our botanical catalog: {browse_url}\n\n"
-            f"Best regards,\nThe Lumera Team"
+            f"Welcome to Penguin Mart! Your skincare and beauty account has been created.\n"
+            f"Explore our catalog: {browse_url}\n\n"
+            f"Best regards,\nThe Penguin Mart Team"
         )
         html_content = f"""
-          <h2 style="margin-top:0; color:#1A362D;">Welcome to Lumera!</h2>
+          <h2 style="margin-top:0; color:#1A362D;">Welcome to Penguin Mart!</h2>
           <p>Hello <strong>{customer_name}</strong>,</p>
-          <p>Your wholesale skincare account is ready. Discover our clinical botanical formulations, barrier restoration creams, and active floral elixirs.</p>
+          <p>Your account is ready. Discover our pure botanical formulations, skin barrier restoration creams, and gentle elixirs.</p>
           <div style="text-align: center;">
-            <a href="{browse_url}" class="btn">Explore Wholesale Catalog</a>
+            <a href="{browse_url}" class="btn">Explore Catalog</a>
           </div>
         """
-        html = render_html_wrapper(subject, "Welcome to Lumera wholesale skincare.", html_content)
+        html = render_html_wrapper(subject, "Welcome to Penguin Mart skin care & beauty.", html_content)
         return subject, text, html
 
     # Fallback generic update
-    subject = "Update regarding your Lumera Account"
-    text = f"Hello {customer_name},\n\nThere is an update regarding your Lumera account.\n\nBest regards,\nThe Lumera Team"
-    html = render_html_wrapper(subject, "Lumera Account Update", f"<p>Hello <strong>{customer_name}</strong>,</p><p>There is an update regarding your account.</p>")
+    subject = "Update regarding your Penguin Mart Account"
+    text = f"Hello {customer_name},\n\nThere is an update regarding your Penguin Mart account.\n\nBest regards,\nThe Penguin Mart Team"
+    html = render_html_wrapper(subject, "Penguin Mart Account Update", f"<p>Hello <strong>{customer_name}</strong>,</p><p>There is an update regarding your account.</p>")
     return subject, text, html

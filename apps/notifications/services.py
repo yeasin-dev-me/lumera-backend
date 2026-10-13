@@ -89,7 +89,7 @@ def dispatch_notification(
     except Exception as exc:
         logger.error("Template rendering failed for event %s: %s", event_type, exc, exc_info=True)
         subject = f"Notification: {event_type}"
-        text_body = "There is an update regarding your Lumera account."
+        text_body = "There is an update regarding your Penguin Mart account."
         html_body = None
 
     # 4. Create Notification record in pending state
@@ -245,7 +245,7 @@ def resend_notification(notification: Notification) -> Notification:
     except Exception as exc:
         logger.error("Template rendering failed on resend: %s", exc)
         subject = notification.subject or f"Notification: {notification.event_type}"
-        text_body = "There is an update regarding your Lumera account."
+        text_body = "There is an update regarding your Penguin Mart account."
         html_body = None
 
     provider = get_email_provider()

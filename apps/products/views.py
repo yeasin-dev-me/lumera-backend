@@ -40,6 +40,15 @@ class StorefrontProductListView(generics.ListAPIView):
         if category_slug:
             queryset = queryset.filter(category__slug=category_slug)
 
+        search_query = self.request.query_params.get("search") or self.request.query_params.get("q")
+        if search_query:
+            search_query = search_query.strip()
+            queryset = queryset.filter(
+                Q(name__icontains=search_query) |
+                Q(description__icontains=search_query) |
+                Q(sku__icontains=search_query)
+            )
+
         ordering = self.request.query_params.get("ordering")
         allowed_orderings = {
             "price": "price",
